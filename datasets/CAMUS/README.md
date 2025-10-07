@@ -1,0 +1,1 @@
+Place "database_nifti/" and "database_split" from original CAMUS dataset in this directory, then run camus.py to build dataset
