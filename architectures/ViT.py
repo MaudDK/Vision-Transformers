@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from architectures.blocks.Embeddings import PatchEmbedding, PositionalEncoding
 from architectures.blocks.Transformer import TransformerBlock
-from architectures.blocks.LayerNorm import LayerNorm2d
 
 class VisionTransformer(nn.Module):
     def __init__(self, 
