@@ -17,7 +17,7 @@ if __name__ == "__main__":
     train_df = camus_df[camus_df['split'] == 'train']
     test_df = camus_df[camus_df['split'] == 'test']
 
-    IMG_SIZE = 1024
+    IMG_SIZE = 224
 
     image_transforms = transforms.Compose([
         transforms.Resize((IMG_SIZE, IMG_SIZE)),
@@ -36,18 +36,24 @@ if __name__ == "__main__":
 
     model = ViTSeg(img_size=IMG_SIZE, 
                    patch_size=16, 
-                   in_channels=3, 
+                   in_channels=1, 
                    embed_dim=768, 
                    num_heads=12, 
                    mlp_ratio=4.0, 
                    depth=12, 
                    dropout=0.0, 
                    out_channels=1, 
-                   load_pretrained_encoder=True,
-                   freeze_encoder=True)
+                   load_pretrained_encoder=False,
+                   freeze_encoder=False)
+    
+    checkpoint_path = "./checkpoints/20251007/epoch_10_metric_0.8330_ViTSeg"
+    
+    if os.path.exists(checkpoint_path):
+        print(f"Loading model weights from {checkpoint_path}...")
+        model.load_state_dict(torch.load(checkpoint_path), strict=True)
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
     criterion = DiceLoss()
-    trainer = Trainer(model, train_dataloader, test_dataloader, epochs=10, criterion=criterion, optimizer=optimizer, model_name="ViTSeg")
+    trainer = Trainer(model, train_dataloader, test_dataloader, epochs=10000, criterion=criterion, optimizer=optimizer, model_name="ViTSeg")
     trainer.train()
     trainer.plot_losses()
