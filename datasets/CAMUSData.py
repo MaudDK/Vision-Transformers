@@ -48,14 +48,15 @@ class CamusSegmentationDataset(Dataset):
         image = Image.fromarray(image)
         
         # Convert mask to PIL Image (keep as is for segmentation)
-        mask = mask.astype(np.uint8)
+        mask = mask.astype(np.uint8) # Add channel dimension
         mask_pil = Image.fromarray(mask)
 
         if self.transform:
             image = self.transform(image)
+            resize = image.shape[1:]  # Get the size after transform
             # Apply resize transform to mask but keep original values
-            mask_resized = transforms.Resize((256, 256))(mask_pil)
-            mask = torch.tensor(np.array(mask_resized), dtype=torch.long)
+            mask_resized = transforms.Resize(resize, interpolation=transforms.InterpolationMode.NEAREST)(mask_pil)
+            mask = torch.tensor(np.array(mask_resized), dtype=torch.long).unsqueeze(0)  # Add channel dimension
 
         else:
             image = torch.tensor(image, dtype=torch.float32).unsqueeze(0)
@@ -63,20 +64,27 @@ class CamusSegmentationDataset(Dataset):
 
         return image, mask
 
-# if __name__ == "__main__":
-#     CAMUS_DIR = "./datasets/CAMUS"
-#     camus_df = pd.read_csv(os.path.join(CAMUS_DIR, "CAMUS_dataset.csv"))
-#     train_df = camus_df[camus_df['split'] != 'test']
-#     test_df = camus_df[camus_df['split'] == 'test']
+if __name__ == "__main__":
+    CAMUS_DIR = "./datasets/CAMUS"
+    camus_df = pd.read_csv(os.path.join(CAMUS_DIR, "CAMUS_dataset.csv"))
+    train_df = camus_df[camus_df['split'] != 'test']
+    test_df = camus_df[camus_df['split'] == 'test']
 
-#     print(f"Training samples: {len(train_df)}")
-#     print(f"Testing samples: {len(test_df)}")
+    print(f"Training samples: {len(train_df)}")
+    print(f"Testing samples: {len(test_df)}")
 
-#     image_transforms = transforms.Compose([
-#         transforms.Resize((256, 256)),
-#         transforms.ToTensor(),
-#     ])
+    image_transforms = transforms.Compose([
+        transforms.Resize((256, 256)),
+        transforms.ToTensor(),
+    ])
 
-#     train_dataset = CamusSegmentationDataset(train_df, transform=image_transforms)
-#     test_dataset = CamusSegmentationDataset(test_df, transform=image_transforms)
+    train_dataset = CamusSegmentationDataset(train_df, transform=image_transforms)
+    test_dataset = CamusSegmentationDataset(test_df, transform=image_transforms)
+
+    dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=4, shuffle=True)
+    
+    for images, masks in dataloader:
+        print(f"Images shape: {images.shape}")
+        print(f"Masks shape: {masks.shape}")
+        break
 
